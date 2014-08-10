@@ -18,5 +18,7 @@ static void print_sizes(void) {
 int main(int argc, char *argv[]) {
 	print_sizes();
 
+	rope r = make_rope();
+
 	return 0;
 }
