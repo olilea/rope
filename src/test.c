@@ -18,7 +18,11 @@ static void print_sizes(void) {
 int main(int argc, char *argv[]) {
 	print_sizes();
 
-	rope r = make_rope();
+	rope *r = make_rope();
+	rope_node *node = make_rope_node();
+	*node->str = 4;
+	add_rope_node(r, node);
+	print_rope(r);
 
 	return 0;
 }

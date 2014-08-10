@@ -31,21 +31,21 @@ typedef struct rope_node_iter_t {
 	rope_node *next;
 } rope_node_iter;
 
-rope make_rope(void);
+rope *make_rope(void);
 
-rope make_rope_cstr(uint8_t *);
+rope *make_rope_cstr(uint8_t *);
 
-void rope_insert(rope, size_t, uint8_t *);
+void rope_insert(rope *, size_t, uint8_t *);
 
-void rope_concat(rope, rope);
+void rope_concat(rope *, rope *);
 
-static inline void add_rope_node(rope, rope_node *);
+void add_rope_node(rope *, rope_node *);
 
-static inline rope_node *make_rope_node(void);
+rope_node *make_rope_node(void);
 
-static inline void balance_rope(rope);
+static inline void balance_rope(rope *);
 
 static inline void print_string(rope_node *);
 
-void print_rope(rope);
+void print_rope(rope *);
 #endif
