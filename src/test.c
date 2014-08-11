@@ -17,10 +17,11 @@ static void print_sizes(void) {
 }
 
 static void print_uint8(uint8_t *string) {
-	int i;
-	for (i = 0; i < 10; ++i) {
-		if (string[i] == '\0') {break;}
-		else {
+	int i = 0;
+	for (; i < MAX_NODE_STR_SIZE; ++i) {
+		if (string[i] == '\0') {
+			break;
+		} else {
 			printf("%c", string[i]);
 		}
 	}
@@ -31,12 +32,16 @@ int main(int argc, char *argv[]) {
 
 	rope *r = make_rope();
 	rope_node *node = make_rope_node();
+	rope_node *node2 = make_rope_node();
 
-	strcpy((node->str), "HHELLO\0");
+	strcpy((node->str), "12345");
+	strcpy((node2->str), "LOLCANOE");
 	add_rope_node(r, node);
+	add_rope_node(r, node2);
 
-	uint8_t *string = rope_to_cstr(r);
-	print_uint8(string);
+	// BROKEN
+	//uint8_t *string = rope_to_cstr(r);
+	//print_uint8(string);
 
 	return 0;
 }
