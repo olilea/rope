@@ -45,7 +45,5 @@ rope_node *make_rope_node(void);
 
 static inline void balance_rope(rope *);
 
-static inline void print_string(rope_node *);
-
-void print_rope(rope *);
+uint8_t *rope_to_cstr(rope *);
 #endif

@@ -97,27 +97,52 @@ static inline void balance_rope(rope *r) {
 	
 }
 
-static inline void print_string(rope_node *node) {
-
-	if (node->left_child == NULL && node->right_child == NULL) {
-		printf("%d", *node->str);
-	} else {
-		if (node->left_child != NULL) {
-			print_string(node->left_child);
-		}
-		if (node->right_child != NULL) {
-			print_string(node->right_child);
-		}
-	}
-}
+typedef struct {
+	rope_node *stk[MAX_ROPE_DEPTH];
+	rope_node **top;
+} node_stack;
 
 // Depth first iteration over the rope
-void print_rope(rope *r) {
+uint8_t *rope_to_cstr(rope *r) {
 
 	if (r->depth == 0) {
-		return;
+		return NULL;
 	}
 
-	print_string(r->head);
+	size_t nodes_expanded = 0;
+	size_t total_nodes = r->bytes_used / SIZEOF_ROPE_NODE;
+
+	uint8_t *cstr = (uint8_t *) malloc(total_nodes);
+	uint8_t *next_free = cstr;
+
+	node_stack stack;
+	stack.top = stack.stk;
+	stack.stk[0] = r->head;
+
+	uint8_t contains_string = 1;
+
+	while (nodes_expanded < total_nodes) {
+
+		if ((*stack.top)->right_child != NULL) {
+			stack.top++;
+			contains_string = 0;
+			*stack.top = (*stack.top)->right_child;
+		}
+		if ((*stack.top)->left_child != NULL) {
+			stack.top++;
+			contains_string = 0;
+			*stack.top = (*stack.top)->left_child;
+		}
+		// Expand the node on the top of the stack
+		if (contains_string) {
+			memcpy(next_free, (*stack.top)->str, MAX_NODE_STR_SIZE);
+			next_free += MAX_NODE_STR_SIZE;
+			stack.top--;
+		}
+		nodes_expanded++;
+		contains_string = 1;
+	}
+
+	return cstr;
 
 }
