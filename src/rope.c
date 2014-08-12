@@ -45,6 +45,8 @@ typedef enum {
 
 void add_rope_node(rope *r, rope_node *node) {
 
+	// THIS NEEDS FIXING
+
 	assert(node != NULL);
 
 	rope_node_iter iter;
@@ -112,7 +114,7 @@ uint8_t *rope_to_cstr(rope *r) {
 	size_t nodes_expanded = 0;
 	size_t total_nodes = r->bytes_used / SIZEOF_ROPE_NODE;
 
-	uint8_t *cstr = (uint8_t *) malloc(total_nodes);
+	uint8_t *cstr = (uint8_t *) malloc(total_nodes * MAX_NODE_STR_SIZE);
 	uint8_t *next_free = cstr;
 
 	node_stack stack;
@@ -120,27 +122,43 @@ uint8_t *rope_to_cstr(rope *r) {
 	stack.stk[0] = r->head;
 
 	uint8_t contains_string = 1;
+	uint8_t children = 0;
+
+	rope_node *popped_node;
 
 	while (nodes_expanded < total_nodes) {
 
-		if ((*stack.top)->right_child != NULL) {
-			stack.top++;
+		#ifdef DEBUG
+		printf("LEFT_CHILD: %p\n", (*stack.top)->left_child);
+		printf("RIGHT_CHILD: %p\n", (*stack.top)->right_child);
+		#endif
+
+		popped_node = *(stack.top);
+
+		if (popped_node->right_child != NULL) {
 			contains_string = 0;
-			*stack.top = (*stack.top)->right_child;
+			children++;
+			*stack.top = popped_node->right_child;
 		}
-		if ((*stack.top)->left_child != NULL) {
-			stack.top++;
+
+		if (popped_node->left_child != NULL) {
 			contains_string = 0;
-			*stack.top = (*stack.top)->left_child;
+			if (children == 1) {
+				stack.top++;
+			}
+			*stack.top = popped_node->left_child;
 		}
+
 		// Expand the node on the top of the stack
 		if (contains_string) {
-			memcpy(next_free, (*stack.top)->str, MAX_NODE_STR_SIZE);
+			memcpy(next_free, popped_node->str, MAX_NODE_STR_SIZE);
 			next_free += MAX_NODE_STR_SIZE;
 			stack.top--;
 		}
+
 		nodes_expanded++;
 		contains_string = 1;
+		children = 0;
 	}
 
 	return cstr;

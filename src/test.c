@@ -33,15 +33,16 @@ int main(int argc, char *argv[]) {
 	rope *r = make_rope();
 	rope_node *node = make_rope_node();
 	rope_node *node2 = make_rope_node();
+	rope_node *node3 = make_rope_node();
 
-	strcpy((node->str), "12345");
 	strcpy((node2->str), "LOLCANOE");
+	strcpy((node3->str), "IT WORKS");
 	add_rope_node(r, node);
 	add_rope_node(r, node2);
+	add_rope_node(r, node3);
 
-	// BROKEN
-	//uint8_t *string = rope_to_cstr(r);
-	//print_uint8(string);
+	uint8_t *string = rope_to_cstr(r);
+	print_uint8(string);
 
 	return 0;
 }
