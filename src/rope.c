@@ -79,6 +79,7 @@ void add_rope_node(rope *r, rope_node *node) {
 	}
 
 	r->bytes_used += SIZEOF_ROPE_NODE;
+	r->depth++;
 
 	// Need to check to make sure that the tree is correctly balanced
 	// and that there is enough space to make another insertion into the tree
@@ -121,7 +122,6 @@ uint8_t *rope_to_cstr(rope *r) {
 	stack.top = stack.stk;
 	stack.stk[0] = r->head;
 
-	uint8_t contains_string = 1;
 	uint8_t children = 0;
 
 	rope_node *popped_node;
@@ -136,13 +136,11 @@ uint8_t *rope_to_cstr(rope *r) {
 		popped_node = *(stack.top);
 
 		if (popped_node->right_child != NULL) {
-			contains_string = 0;
 			children++;
 			*stack.top = popped_node->right_child;
 		}
 
 		if (popped_node->left_child != NULL) {
-			contains_string = 0;
 			if (children == 1) {
 				stack.top++;
 			}
@@ -150,14 +148,20 @@ uint8_t *rope_to_cstr(rope *r) {
 		}
 
 		// Expand the node on the top of the stack
-		if (contains_string) {
-			memcpy(next_free, popped_node->str, MAX_NODE_STR_SIZE);
-			next_free += MAX_NODE_STR_SIZE;
+		if (children == 0) {
+			printf("HELLO");
+			int i = 0;
+			for (; i < MAX_NODE_STR_SIZE; ++i) {
+				if (popped_node->str[i] == '\0') {
+					break;
+				}
+			}
+			memcpy(next_free, popped_node->str, i);
+			next_free += i;
 			stack.top--;
 		}
 
 		nodes_expanded++;
-		contains_string = 1;
 		children = 0;
 	}
 
