@@ -36,10 +36,10 @@ int main(int argc, char *argv[]) {
 	rope_node *node2 = make_rope_node();
 	rope_node *node3 = make_rope_node();
 
-	strcpy((node2->str), "LOLCANOE");
-	strcpy((node3->str), "IT WORKS!");
+	strcpy((char *)(node2->str), "LOLCANOE");
+	strcpy((char *)(node3->str), "IT WORKS!");
 	node2->weight = 9;
-	node2->weight = 10;
+	node3->weight = 10;
 	add_rope_node(r, node);
 	add_rope_node(r, node2);
 	add_rope_node(r, node3);

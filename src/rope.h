@@ -26,11 +26,6 @@ typedef struct rope_t {
 	rope_node *head;
 } rope;
 
-typedef struct rope_node_iter_t {
-	rope_node *current;
-	rope_node *next;
-} rope_node_iter;
-
 rope *make_rope(void);
 
 rope *make_rope_cstr(uint8_t *);

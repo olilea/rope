@@ -38,43 +38,40 @@ void rope_concat(rope *r1, rope *r2) {
 
 }
 
-typedef enum {
-	LEFT,
-	RIGHT
-} node_child;
-
 void add_rope_node(rope *r, rope_node *node) {
 
 	// THIS NEEDS FIXING
 
 	assert(node != NULL);
 
-	rope_node_iter iter;
-	node_child insert_dir;
+	rope_node *iter;
 
 	if (r->depth == 0) {
 		r->head = node;
 		r->depth++;
 	} else {
 
-		iter.current = NULL;
-		iter.next = r->head;
+		iter = r->head;
+		uint8_t complete = 0;
 
-		while (iter.next != NULL) {
-			iter.current = iter.next;
-			if (node->weight <= iter.current->weight) {
-				iter.current->weight += node->weight;
-				iter.next = iter.current->left_child;
-				insert_dir = LEFT;
+		while (!complete) {
+
+			if (node->weight <= iter->weight) {
+				iter->weight += node->weight;
+				if (iter->left_child == NULL) {
+					iter->left_child = node;
+					complete = 1;
+				} else {
+					iter = iter->left_child;
+				}
 			} else {
-				iter.next = iter.current->right_child;
-				insert_dir = RIGHT;
+				if (iter->right_child == NULL) {
+					iter->right_child = node;
+					complete = 1;
+				} else {
+					iter = iter->right_child;
+				}
 			}
-		}
-		if (insert_dir == LEFT) {
-			iter.current->left_child = node;
-		} else {
-			iter.current->right_child = node;
 		}
 	}
 
@@ -127,14 +124,14 @@ uint8_t *rope_to_cstr(rope *r) {
 	rope_node *popped_node;
 
 	while (nodes_expanded < total_nodes) {
-
 		#ifdef DEBUG
 		printf("LEFT_CHILD: %p\n", (*stack.top)->left_child);
 		printf("RIGHT_CHILD: %p\n", (*stack.top)->right_child);
 		#endif
 
 		popped_node = *(stack.top);
-
+printf("HLLEO)");
+fflush(stdout);
 		if (popped_node->left_child != NULL) {
 			children++;
 			*stack.top = popped_node->left_child;
@@ -163,6 +160,7 @@ uint8_t *rope_to_cstr(rope *r) {
 
 		nodes_expanded++;
 		children = 0;
+
 	}
 
 	return cstr;
