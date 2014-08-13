@@ -135,21 +135,21 @@ uint8_t *rope_to_cstr(rope *r) {
 
 		popped_node = *(stack.top);
 
-		if (popped_node->right_child != NULL) {
+		if (popped_node->left_child != NULL) {
 			children++;
-			*stack.top = popped_node->right_child;
+			*stack.top = popped_node->left_child;
 		}
 
-		if (popped_node->left_child != NULL) {
+		if (popped_node->right_child != NULL) {
 			if (children == 1) {
 				stack.top++;
 			}
-			*stack.top = popped_node->left_child;
+			*stack.top = popped_node->right_child;
 		}
 
 		// Expand the node on the top of the stack
 		if (children == 0) {
-			printf("HELLO");
+			// Determine if the string contains '\0'
 			int i = 0;
 			for (; i < MAX_NODE_STR_SIZE; ++i) {
 				if (popped_node->str[i] == '\0') {
