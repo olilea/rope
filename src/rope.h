@@ -22,7 +22,6 @@ typedef struct rope_node_t {
 
 typedef struct rope_t {
 	size_t bytes_used;
-	size_t depth;
 	rope_node *head;
 } rope;
 
@@ -36,7 +35,10 @@ void rope_concat(rope *, rope *);
 
 void add_rope_node(rope *, rope_node *);
 
+// SHould be static inline
 rope_node *make_rope_node(void);
+
+static inline rope_node *make_rope_node_w(int);
 
 static inline void balance_rope(rope *);
 

@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "rope.h"
 
@@ -35,11 +36,16 @@ int main(int argc, char *argv[]) {
 	rope_node *node = make_rope_node();
 	rope_node *node2 = make_rope_node();
 	rope_node *node3 = make_rope_node();
+	printf("node: %p\n", node);
+	printf("node2: %p\n", node2);
+	printf("node3: %p\n", node3);
 
 	strcpy((char *)(node2->str), "LOLCANOE");
 	strcpy((char *)(node3->str), "IT WORKS!");
+	node->weight = rand();
 	node2->weight = 9;
 	node3->weight = 10;
+
 	add_rope_node(r, node);
 	add_rope_node(r, node2);
 	add_rope_node(r, node3);

@@ -15,7 +15,6 @@ rope *make_rope(void) {
 	rope *r = (rope *) malloc(sizeof(rope));
 
 	r->bytes_used = 0;
-	r->depth = 0;
 	r->head = NULL;
 	next_node_location = (rope_node *)malloc(INITIAL_POOL_SIZE);
 
@@ -38,6 +37,11 @@ void rope_concat(rope *r1, rope *r2) {
 
 }
 
+enum direction_e {
+	LEFT,
+	RIGHT
+};
+
 void add_rope_node(rope *r, rope_node *node) {
 
 	// THIS NEEDS FIXING
@@ -46,17 +50,35 @@ void add_rope_node(rope *r, rope_node *node) {
 
 	rope_node *iter;
 
-	if (r->depth == 0) {
+	if (r->bytes_used == 0) {
 		r->head = node;
-		r->depth++;
+	} else if ((r->bytes_used / SIZEOF_ROPE_NODE) == 1) {
+		// If the head has no nodes
+		if (node->weight <= r->head->weight) {
+			r->head->left_child = node;
+		} else {
+			r->head->right_child = node;
+		}
 	} else {
-
-		iter = r->head;
 		uint8_t complete = 0;
-
+		iter = r->head;
 		while (!complete) {
-
-			if (node->weight <= iter->weight) {
+			#ifdef DEBUG
+			//printf("LEFT_CHILD: %p\n", iter->left_child);
+			//printf("RIGHT_CHILD: %p\n", iter->right_child);
+			//fflush(stdout);
+			#endif
+			if (iter->left_child == NULL && iter->right_child == NULL) {
+				if (node->weight <= iter->weight) {
+					iter->left_child = node;
+					iter->right_child = make_rope_node_w(iter->weight);
+					iter->weight = node->weight;
+				} else {
+					iter->left_child = make_rope_node_w(iter->weight);
+					iter->right_child = node;
+				}
+				complete = 1;
+			} else if (node->weight <= iter->weight) {
 				iter->weight += node->weight;
 				if (iter->left_child == NULL) {
 					iter->left_child = node;
@@ -76,7 +98,6 @@ void add_rope_node(rope *r, rope_node *node) {
 	}
 
 	r->bytes_used += SIZEOF_ROPE_NODE;
-	r->depth++;
 
 	// Need to check to make sure that the tree is correctly balanced
 	// and that there is enough space to make another insertion into the tree
@@ -87,6 +108,15 @@ rope_node *make_rope_node(void) {
 
 	rope_node *node = next_node_location++;
 	node->weight = 0;
+	node->left_child = NULL;
+	node->right_child = NULL;
+
+	return node;
+}
+
+static inline rope_node *make_rope_node_w(int mass) {
+	rope_node *node = next_node_location++;
+	node->weight = mass;
 	node->left_child = NULL;
 	node->right_child = NULL;
 
@@ -105,7 +135,7 @@ typedef struct {
 // Depth first iteration over the rope
 uint8_t *rope_to_cstr(rope *r) {
 
-	if (r->depth == 0) {
+	if (r->bytes_used == 0) {
 		return NULL;
 	}
 
@@ -130,8 +160,7 @@ uint8_t *rope_to_cstr(rope *r) {
 		#endif
 
 		popped_node = *(stack.top);
-printf("HLLEO)");
-fflush(stdout);
+
 		if (popped_node->left_child != NULL) {
 			children++;
 			*stack.top = popped_node->left_child;
