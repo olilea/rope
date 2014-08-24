@@ -17,7 +17,7 @@ static void print_sizes(void) {
 	print_rope_node_size();
 }
 
-static void print_uint8(uint8_t *string) {
+void print_uint8(uint8_t *string) {
 	int i = 0;
 	while (1) {
 		if (string[i] == '\0') {
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
 	strcpy((char *)(node2->str), "LOLCANOE");
 	strcpy((char *)(node3->str), "IT WORKS!");
-	node->weight = rand();
+	node->weight = 9;
 	node2->weight = 9;
 	node3->weight = 10;
 

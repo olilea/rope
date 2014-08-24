@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "rope.h"
 
@@ -44,8 +45,6 @@ enum direction_e {
 
 void add_rope_node(rope *r, rope_node *node) {
 
-	// THIS NEEDS FIXING
-
 	assert(node != NULL);
 
 	rope_node *iter;
@@ -60,48 +59,41 @@ void add_rope_node(rope *r, rope_node *node) {
 			r->head->right_child = node;
 		}
 	} else {
-		uint8_t complete = 0;
+		bool complete = false;
 		iter = r->head;
 		while (!complete) {
-			#ifdef DEBUG
-			//printf("LEFT_CHILD: %p\n", iter->left_child);
-			//printf("RIGHT_CHILD: %p\n", iter->right_child);
-			//fflush(stdout);
-			#endif
 			if (iter->left_child == NULL && iter->right_child == NULL) {
 				if (node->weight <= iter->weight) {
 					iter->left_child = node;
 					iter->right_child = make_rope_node_w(iter->weight);
+					memcpy(iter->right_child->str, iter->str, MAX_NODE_STR_SIZE);
 					iter->weight = node->weight;
 				} else {
 					iter->left_child = make_rope_node_w(iter->weight);
+					memcpy(iter->left_child->str, iter->str, MAX_NODE_STR_SIZE);
 					iter->right_child = node;
 				}
-				complete = 1;
+				r->bytes_used += SIZEOF_ROPE_NODE;
+				complete = true;
 			} else if (node->weight <= iter->weight) {
 				iter->weight += node->weight;
 				if (iter->left_child == NULL) {
 					iter->left_child = node;
-					complete = 1;
+					complete = true;
 				} else {
 					iter = iter->left_child;
 				}
 			} else {
 				if (iter->right_child == NULL) {
 					iter->right_child = node;
-					complete = 1;
+					complete = true;
 				} else {
 					iter = iter->right_child;
 				}
 			}
 		}
 	}
-
 	r->bytes_used += SIZEOF_ROPE_NODE;
-
-	// Need to check to make sure that the tree is correctly balanced
-	// and that there is enough space to make another insertion into the tree
-	// from the pool
 }
 
 rope_node *make_rope_node(void) {
@@ -149,7 +141,7 @@ uint8_t *rope_to_cstr(rope *r) {
 	stack.top = stack.stk;
 	stack.stk[0] = r->head;
 
-	uint8_t children = 0;
+	bool children = false;
 
 	rope_node *popped_node;
 
@@ -161,21 +153,24 @@ uint8_t *rope_to_cstr(rope *r) {
 
 		popped_node = *(stack.top);
 
-		if (popped_node->left_child != NULL) {
-			children++;
-			*stack.top = popped_node->left_child;
-		}
-
 		if (popped_node->right_child != NULL) {
-			if (children == 1) {
-				stack.top++;
-			}
+			children = true;
 			*stack.top = popped_node->right_child;
 		}
 
+		if (popped_node->left_child != NULL) {
+			if (children) {
+				stack.top++;
+			}
+			children = true;
+			*stack.top = popped_node->left_child;
+		}
+
 		// Expand the node on the top of the stack
-		if (children == 0) {
+		if (!children) {
 			// Determine if the string contains '\0'
+			printf("HI");
+			fflush(stdout);
 			int i = 0;
 			for (; i < MAX_NODE_STR_SIZE; ++i) {
 				if (popped_node->str[i] == '\0') {
@@ -188,10 +183,8 @@ uint8_t *rope_to_cstr(rope *r) {
 		}
 
 		nodes_expanded++;
-		children = 0;
+		children = false;
 
 	}
-
 	return cstr;
-
 }
