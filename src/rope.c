@@ -30,6 +30,29 @@ rope *make_rope_cstr(uint8_t *cstr) {
 	return r;
 }
 
+char rope_index(rope *r, size_t index) {
+	rope_node *iter = r->head;
+	size_t weight_counter = index;
+
+	while (1) {
+		if (weight_counter <= iter->weight) {
+			printf("GOING LEFT\n");
+			fflush(stdout);
+			if (iter->left_child == NULL && iter->right_child == NULL) {
+				printf("EMPTY LEFT");
+				fflush(stdout);
+				return ((iter->str)[weight_counter]);
+			}
+			iter = iter->left_child;
+		} else {
+			printf("GOING RIGHT\n");
+			fflush(stdout);
+			weight_counter -= iter->weight;
+			iter = iter->right_child;
+		}
+	}
+}
+
 void rope_insert(rope *r, size_t pos, uint8_t *cstr) {
 
 }
@@ -124,6 +147,8 @@ typedef struct {
 	rope_node **top;
 } node_stack;
 
+
+
 // Depth first iteration over the rope
 uint8_t *rope_to_cstr(rope *r) {
 
@@ -169,8 +194,6 @@ uint8_t *rope_to_cstr(rope *r) {
 		// Expand the node on the top of the stack
 		if (!children) {
 			// Determine if the string contains '\0'
-			printf("HI");
-			fflush(stdout);
 			int i = 0;
 			for (; i < MAX_NODE_STR_SIZE; ++i) {
 				if (popped_node->str[i] == '\0') {

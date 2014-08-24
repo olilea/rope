@@ -30,28 +30,35 @@ void print_uint8(uint8_t *string) {
 }
 
 int main(int argc, char *argv[]) {
-	//print_sizes();
+	print_sizes();
 
 	rope *r = make_rope();
 	rope_node *node = make_rope_node();
 	rope_node *node2 = make_rope_node();
 	rope_node *node3 = make_rope_node();
+	rope_node *node4 = make_rope_node();
 	printf("node: %p\n", node);
 	printf("node2: %p\n", node2);
 	printf("node3: %p\n", node3);
+	printf("node4: %p\n", node4);
 
 	strcpy((char *)(node2->str), "LOLCANOE");
 	strcpy((char *)(node3->str), "IT WORKS!");
-	node->weight = 9;
-	node2->weight = 9;
-	node3->weight = 10;
+	strcpy((char *)(node4->str), "HELLO!");
+	node->weight = 0;
+	node2->weight = 8;
+	node3->weight = 9;
+	node4->weight = 6;
 
 	add_rope_node(r, node);
 	add_rope_node(r, node2);
 	add_rope_node(r, node3);
+	add_rope_node(r, node4);
 
 	uint8_t *string = rope_to_cstr(r);
 	print_uint8(string);
+
+	printf("%c", rope_index(r, 4));
 
 	return 0;
 }

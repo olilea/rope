@@ -6,7 +6,7 @@
 
 #define DEBUG
 
-#define MAX_NODE_STR_SIZE 64
+#define MAX_NODE_STR_SIZE 512
 #define MAX_ROPE_DEPTH 50
 
 #define INITIAL_POOL_SIZE 1048576
@@ -29,18 +29,20 @@ rope *make_rope(void);
 
 rope *make_rope_cstr(uint8_t *);
 
-void rope_insert(rope *, size_t, uint8_t *);
+char rope_index(rope *r, size_t index);
 
-void rope_concat(rope *, rope *);
+void rope_insert(rope *r, size_t pos, uint8_t *cstr);
 
-void add_rope_node(rope *, rope_node *);
+void rope_concat(rope *r1, rope *r2);
+
+void add_rope_node(rope *r, rope_node *node);
 
 // SHould be static inline
 rope_node *make_rope_node(void);
 
-static inline rope_node *make_rope_node_w(int);
+static inline rope_node *make_rope_node_w(int mass);
 
-static inline void balance_rope(rope *);
+static inline void balance_rope(rope *r);
 
-uint8_t *rope_to_cstr(rope *);
+uint8_t *rope_to_cstr(rope *r);
 #endif
