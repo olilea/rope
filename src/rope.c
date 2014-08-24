@@ -36,16 +36,12 @@ char rope_index(rope *r, size_t index) {
 
 	while (1) {
 		if (weight_counter <= iter->weight) {
-			printf("GOING LEFT\n");
-			fflush(stdout);
 			if (iter->left_child == NULL && iter->right_child == NULL) {
-				printf("EMPTY LEFT");
 				fflush(stdout);
 				return ((iter->str)[weight_counter]);
 			}
 			iter = iter->left_child;
 		} else {
-			printf("GOING RIGHT\n");
 			fflush(stdout);
 			weight_counter -= iter->weight;
 			iter = iter->right_child;
@@ -72,20 +68,18 @@ void add_rope_node(rope *r, rope_node *node) {
 
 	rope_node *iter;
 
+	// If the rope has no head
 	if (r->bytes_used == 0) {
 		r->head = node;
-	} else if ((r->bytes_used / SIZEOF_ROPE_NODE) == 1) {
-		// If the head has no nodes
-		if (node->weight <= r->head->weight) {
-			r->head->left_child = node;
-		} else {
-			r->head->right_child = node;
-		}
 	} else {
 		bool complete = false;
 		iter = r->head;
 		while (!complete) {
+			// If the current node is a leaf
 			if (iter->left_child == NULL && iter->right_child == NULL) {
+				// If the node to insert's weight is less than the iter's weight, insert
+				// the node to insert to the left of this node, and copy the iter node to the right
+				// of iter. Else, node to the right, iter to the left
 				if (node->weight <= iter->weight) {
 					iter->left_child = node;
 					iter->right_child = make_rope_node_w(iter->weight);
@@ -99,18 +93,25 @@ void add_rope_node(rope *r, rope_node *node) {
 				r->bytes_used += SIZEOF_ROPE_NODE;
 				complete = true;
 			} else if (node->weight <= iter->weight) {
+				// If the node to insert's weight is less than the current node's weight
+				// add the correct amount to the current node's weight
 				iter->weight += node->weight;
 				if (iter->left_child == NULL) {
+					// If the current node's left child is NULL, insert the node here
+					// Else on the right
 					iter->left_child = node;
 					complete = true;
 				} else {
 					iter = iter->left_child;
 				}
 			} else {
+				// If the node to insert's weight is greater than the current node's weight...
 				if (iter->right_child == NULL) {
+					// If there is space on the current node's right, insert the node here
 					iter->right_child = node;
 					complete = true;
 				} else {
+					// Else, move the current node to the current node's right child and repeat
 					iter = iter->right_child;
 				}
 			}
@@ -194,6 +195,7 @@ uint8_t *rope_to_cstr(rope *r) {
 		// Expand the node on the top of the stack
 		if (!children) {
 			// Determine if the string contains '\0'
+			// Prevents copying the whole string if the entire space in the node is not used
 			int i = 0;
 			for (; i < MAX_NODE_STR_SIZE; ++i) {
 				if (popped_node->str[i] == '\0') {
