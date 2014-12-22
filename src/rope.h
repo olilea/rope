@@ -1,48 +1,30 @@
-
-#ifndef ROPE_H_
-#define ROPE_H_
+#ifndef ROPE_H
+#define ROPE_H
 
 #include <stdint.h>
+#include <stddef.h>
 
-#define DEBUG
+typedef struct r_node {
+    struct r_node *left;
+    struct r_node *right; 
+    uint32_t value;
+    uint32_t str_length;
+    uint8_t *str;
+} r_node;
 
-#define MAX_NODE_STR_SIZE 512
-#define MAX_ROPE_DEPTH 50
-
-#define INITIAL_POOL_SIZE 1048576
-
-typedef struct rope_node_t {
-	// The sum of the size of the string at the node and the sum of all
-	// weights at the nodes left subtree
-	size_t weight;
-	uint8_t str[MAX_NODE_STR_SIZE];
-	struct rope_node_t *left_child;
-	struct rope_node_t *right_child;
-} rope_node;
-
-typedef struct rope_t {
-	size_t bytes_used;
-	rope_node *head;
+typedef struct rope {
+    r_node *head;
+    size_t char_width;
+    uint32_t str_length;
 } rope;
 
-rope *make_rope(void);
+// The width of each char in bytes
+rope *make_rope(const size_t char_width);
 
-rope *make_rope_cstr(uint8_t *);
+int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length);
 
-char rope_index(rope *r, size_t index);
+//uint8_t *substring_of_rope(rope *r, const uint32_t start, const uint32_t end);
 
-void rope_insert(rope *r, size_t pos, uint8_t *cstr);
+//int8_t remove_from_rope(rope *r, const uint32_t start, const uint32_t end);
 
-void rope_concat(rope *r1, rope *r2);
-
-void add_rope_node(rope *r, rope_node *node);
-
-// SHould be static inline
-rope_node *make_rope_node(void);
-
-static inline rope_node *make_rope_node_w(int mass);
-
-static inline void balance_rope(rope *r);
-
-uint8_t *rope_to_cstr(rope *r);
 #endif
