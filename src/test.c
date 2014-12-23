@@ -8,9 +8,9 @@
 
 static void print_rope(rope *r) {
     uint8_t *output = rope_to_string(r);
-    uint8_t *cur = output;
-    while (*cur != '\0') {
-        putchar(*cur);
+    int i;
+    for (i = 0; i < r->str_length; ++i) {
+        printf("%u", output[i]);
     }
 }
 
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     data[1] = 2;
     data[2] = 3;
     data[3] = 4;
-    data[5] = 5;
+    data[4] = 5;
 
     // Error in append to rope
     append_to_rope(r, data, 5);

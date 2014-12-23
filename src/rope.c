@@ -53,7 +53,7 @@ static void free_stack(r_stack *stack) {
 }
 
 static inline r_node *create_empty_node() {
-    r_node *node = malloc(sizeof(node));
+    r_node *node = malloc(sizeof(r_node));
     if (node == NULL)
         return NULL;
     node->left = NULL;
@@ -282,7 +282,7 @@ int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length) {
 
 uint8_t *rope_to_string(rope *r) {
     r_node *cur = r->head;
-    uint8_t *output_string = malloc((r->char_width * r->str_length) + 1);
+    uint8_t *output_string = malloc(r->char_width * r->str_length);
     if (output_string == NULL)
         return NULL;
     if (cur->left == NULL) {
@@ -312,7 +312,6 @@ uint8_t *rope_to_string(rope *r) {
         }
         free_stack(stack);
     }
-    output_string[r->char_width * r->str_length] = '\0';
     return output_string;
 
 cleanup:
