@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "rope.h"
 
@@ -56,7 +57,6 @@ rope *make_rope(const size_t char_width) {
         head->left = NULL;
         head->right = NULL;
         head->value = 0;
-        head->str_length = 0;
         head->str = NULL;
     }
     return r;
@@ -83,6 +83,7 @@ static uint32_t value_of_tree(r_node *head) {
                }
            }
         }
+        free_stack(stack);
     }
     return value;
 }
@@ -94,7 +95,6 @@ static int8_t concat_ropes(rope *r1, rope *r2) {
 
     new_head->left = r1->head;
     new_head->right = r2->head;
-    new_head->str_length = 0;
     new_head->str = NULL;
     new_head->value = value_of_tree(r1->head); 
 
@@ -105,5 +105,62 @@ static int8_t concat_ropes(rope *r1, rope *r2) {
 
 int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length) {
     r_node *cur = r->head;
-    
+    while (cur->right != NULL)
+        cur = cur->right;
+    if (str_length < MAX_NODE_CONTENTS) {
+        // Create new parent node for original node and new node
+        r_node *new_parent = malloc(sizeof(r_node));
+        r_node *right_node = malloc(sizeof(r_node));
+        if ((new_parent == NULL) || (right_node == NULL))
+            return -1;
+        right_node->left = NULL;
+        right_node->right = NULL;
+        right_node->value = str_length;
+        right_node->str = str;
+
+        new_parent->left = cur;
+        new_parent->right = right_node;
+        new_parent->value = cur->value;
+        new_parent->str = NULL;
+    }
+    r->str_length += str_length;
+
+    return 0;
 }
+
+uint8_t *rope_to_string(rope *r) {
+    r_node *cur = r->head;
+    uint8_t *output_string = malloc(r->char_width * r->str_length);
+    if (output_string == NULL)
+        return NULL;
+    if (cur->left == NULL) {
+        strncpy(output_string, cur->str, r->str_length);
+        return output_string;
+    } else {
+        r_stack *stack = malloc(sizeof(stack));
+        uint8_t *output_cur = output_string;
+        if (stack == NULL)
+            return NULL;
+        else {
+            stack->element = cur;
+            stack->next = NULL;
+            while (stack != NULL) {
+                cur = stack->element;
+                stack = pop_stack(stack);
+                if (cur->left != NULL) {
+                    if ((push_to_stack(stack, cur->right) == -1)
+                        || push_to_stack(stack, cur->left) == -1) {
+                        free_stack(stack);
+                       return NULL;
+                    }
+                } else {
+                    strncpy(output_cur, cur->str, cur->value);
+                    output_cur += cur->value;
+                }
+            }
+        }
+        free_stack(stack);
+        return output_string;
+    }
+}
+
