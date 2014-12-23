@@ -22,16 +22,18 @@ static r_stack *pop_stack(r_stack *stack) {
     }
 }
 
-static int8_t push_to_stack(r_stack *stack, r_node *element) {
-    if (element == NULL)
+static int8_t push_to_stack(r_stack **stack, r_node *element) {
+    if (*stack == NULL)
+        *stack = malloc(sizeof(r_stack));
+    if ((*stack == NULL) || (element == NULL))
         return -1;
-    r_stack *new_stack = malloc(sizeof(stack));
+    r_stack *new_stack = malloc(sizeof(r_stack));
     if (new_stack == NULL)
         return -1;
-    new_stack->next = stack->next;
-    new_stack->element = stack->element;
-    stack->next = new_stack;
-    stack->element = element;
+    new_stack->next = (*stack)->next;
+    new_stack->element = (*stack)->element;
+    (*stack)->next = new_stack;
+    (*stack)->element = element;
     return 0;
 }
 
@@ -89,8 +91,8 @@ static uint32_t value_of_tree(r_node *head) {
            if ((cur->left == NULL) || (cur->right == NULL))
                value += cur->value;
            else {
-               if ((push_to_stack(stack, cur->left) == -1)
-                   || push_to_stack(stack, cur->right) == -1) {
+               if ((push_to_stack(&stack, cur->left) == -1)
+                   || push_to_stack(&stack, cur->right) == -1) {
                    free_stack(stack);
                    return -1;
                }
@@ -122,10 +124,11 @@ static r_node *split_node_above(r_node *left_node) {
     // Create new parent node for original node and new node
     r_node *new_parent = malloc(sizeof(r_node));
     r_node *right_node = create_empty_node();
-    if ((new_parent == NULL) || (right_node == NULL))
+    if ((new_parent == NULL) || (right_node == NULL)) {
         free(new_parent);
         free(right_node);
         return NULL;
+    }
 
     new_parent->left = left_node;
     new_parent->right = right_node;
@@ -188,11 +191,14 @@ static r_node *create_node_structure_from_string(const uint32_t char_width, uint
         cur = stack->element;
         stack = pop_stack(stack);
         if (layer == layers) {
-            uint32_t node_value = 1;//str_length - str_pos;
+            uint32_t node_value = (str + (char_width * str_length)) - str_pos;
+            if (node_value > MAX_NODE_CONTENTS)
+                node_value = MAX_NODE_CONTENTS;
             cur->left = NULL;
             cur->right = NULL;
             cur->value = node_value;
             memcpy(cur->str, str_pos, node_value * char_width);
+            str_pos += node_value * char_width;
         } else {
             cur->left = create_empty_node();
             cur->right = create_empty_node();
@@ -201,15 +207,17 @@ static r_node *create_node_structure_from_string(const uint32_t char_width, uint
                 free(cur->right);
                 goto cleanup;
             }
-            if ((push_to_stack(stack, cur->left) == -1)
-                    || (push_to_stack(stack, cur->right)) == -1)
+            if ((push_to_stack(&stack, cur->left) == -1)
+                    || (push_to_stack(&stack, cur->right)) == -1)
                 goto cleanup;
         }
     }
+    return head;
 cleanup:
     free(cur);
     free_stack(stack);
     // TODO Free tree
+    return NULL;
 }
 
 static rope *rope_from_string(const uint32_t char_width, uint8_t *str, const uint32_t str_length) {
@@ -231,6 +239,17 @@ static rope *rope_from_string(const uint32_t char_width, uint8_t *str, const uin
     return r;
 }
 
+static inline int8_t copy_string_to_node(r_node *node,
+        uint8_t char_width, uint8_t *str, uint32_t str_length) {
+    uint32_t str_byte_len = char_width * str_length;
+    node->str = malloc(str_byte_len);
+    if (node->str == NULL)
+        return -1;
+    memcpy(node->str, str, str_byte_len);
+    node->value = str_length;
+    return 0;
+}
+
 int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length) {
     r_node *cur = r->head;
     if (str_length < MAX_NODE_CONTENTS) {
@@ -239,19 +258,15 @@ int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length) {
             cur = cur->right;
         if (cur->value == 0) {
             // If the found node has no string put it there
-            uint32_t str_byte_len = str_length * r->char_width;
-            cur->str = malloc(str_byte_len);
-            if (cur->str == NULL)
+            if (copy_string_to_node(cur, r->char_width, str, str_length) == -1)
                 return -1;
-            memcpy(cur->str, str, str_byte_len)
-            cur->value = str_length;
         } else {
             r_node *new_parent = split_node_above(cur);
             if (new_parent == NULL)
                 return -1;
-            new_parent->right->value = str_length;
-            new_parent->right->str = str;
-            if (cur == r->head)
+            if (copy_string_to_node(new_parent->right, r->char_width, str, str_length) == -1)
+                return -1;
+            if (r->head == cur)
                 r->head = new_parent;
         }
         r->str_length += str_length;
@@ -267,12 +282,11 @@ int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length) {
 
 uint8_t *rope_to_string(rope *r) {
     r_node *cur = r->head;
-    uint8_t *output_string = malloc(r->char_width * r->str_length);
+    uint8_t *output_string = malloc((r->char_width * r->str_length) + 1);
     if (output_string == NULL)
         return NULL;
     if (cur->left == NULL) {
         memcpy(output_string, cur->str, r->str_length * r->char_width);
-        return output_string;
     } else {
         r_stack *stack = malloc(sizeof(stack));
         uint8_t *output_cur = output_string;
@@ -285,8 +299,8 @@ uint8_t *rope_to_string(rope *r) {
                 cur = stack->element;
                 stack = pop_stack(stack);
                 if (cur->left != NULL) {
-                    if ((push_to_stack(stack, cur->right) == -1)
-                        || push_to_stack(stack, cur->left) == -1) {
+                    if ((push_to_stack(&stack, cur->right) == -1)
+                        || push_to_stack(&stack, cur->left) == -1) {
                         free_stack(stack);
                         goto cleanup;
                     }
@@ -297,8 +311,10 @@ uint8_t *rope_to_string(rope *r) {
             }
         }
         free_stack(stack);
-        return output_string;
     }
+    output_string[r->char_width * r->str_length] = '\0';
+    return output_string;
+
 cleanup:
     free(output_string);
     return NULL;
