@@ -4,7 +4,7 @@ RM=rm -f
 
 FLAGS=	-Wall\
 		-pedantic\
-		-O3\
+		-g\
 
 EXECUTABLE=bin/test
 
