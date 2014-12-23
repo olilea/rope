@@ -5,6 +5,7 @@ RM=rm -f
 FLAGS=	-Wall\
 		-pedantic\
 		-g\
+            -lm\
 
 EXECUTABLE=bin/test
 

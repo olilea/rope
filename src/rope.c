@@ -4,7 +4,7 @@
 
 #include "rope.h"
 
-#define MAX_NODE_CONTENTS 128
+#define MAX_NODE_CONTENTS 3
 
 typedef struct r_stack {
     struct r_stack *next;
