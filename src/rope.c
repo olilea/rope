@@ -91,8 +91,8 @@ static uint32_t value_of_tree(r_node *head) {
            if ((cur->left == NULL) || (cur->right == NULL))
                value += cur->value;
            else {
-               if ((push_to_stack(&stack, cur->left) == -1)
-                   || push_to_stack(&stack, cur->right) == -1) {
+               if ((push_to_stack(&stack, cur->right) == -1)
+                   || push_to_stack(&stack, cur->left) == -1) {
                    free_stack(stack);
                    return -1;
                }
@@ -165,19 +165,18 @@ static r_node *create_node_structure_from_string(const uint32_t char_width, uint
     if (str_length <= MAX_NODE_CONTENTS)
         return create_node_from_string(char_width, str, str_length);
 
-    // The number of nodes of the bttom of the node structure,
-    // making sure to add one if their is a remainder from the division
-    uint32_t bottom_nodes = str_length / MAX_NODE_CONTENTS;
+    // The number of nodes at the bottom of the node structure,
+    // making sure to add one if there is a remainder from the division
+    double bottom_nodes = str_length / MAX_NODE_CONTENTS;
     if ((str_length % MAX_NODE_CONTENTS) != 0)
         bottom_nodes++;
 
     // The number of layers required to make up the tree
-    uint32_t layers = (uint32_t)(ceil(log2((double)bottom_nodes)) + 0.5f);
+    uint32_t layers = (uint32_t)(ceil(log2(bottom_nodes) + 0.5f));
     r_node *cur = create_empty_node();
     r_node *head = cur;
     if (cur == NULL)
         return NULL;
-    layers--;
 
     r_stack *stack = malloc(sizeof(r_stack));
     if (stack == NULL)
@@ -189,7 +188,7 @@ static r_node *create_node_structure_from_string(const uint32_t char_width, uint
     int layer = 1;
     while (stack != NULL) {
         cur = stack->element;
-        stack = pop_stack(stack);
+        // Problem is here
         if (layer == layers) {
             uint32_t node_value = (str + (char_width * str_length)) - str_pos;
             if (node_value > MAX_NODE_CONTENTS)
@@ -197,8 +196,13 @@ static r_node *create_node_structure_from_string(const uint32_t char_width, uint
             cur->left = NULL;
             cur->right = NULL;
             cur->value = node_value;
-            memcpy(cur->str, str_pos, node_value * char_width);
-            str_pos += node_value * char_width;
+            uint32_t req_bytes = node_value * char_width;
+            cur->str = malloc(req_bytes);
+            if (cur->str == NULL)
+                goto cleanup;
+            memcpy(cur->str, str_pos, req_bytes);
+            str_pos += req_bytes;
+            stack = pop_stack(stack);
         } else {
             cur->left = create_empty_node();
             cur->right = create_empty_node();
@@ -207,9 +211,13 @@ static r_node *create_node_structure_from_string(const uint32_t char_width, uint
                 free(cur->right);
                 goto cleanup;
             }
-            if ((push_to_stack(&stack, cur->left) == -1)
-                    || (push_to_stack(&stack, cur->right)) == -1)
+            // NEED A WAY OF GETTING THE CORRECT VALUE TO THE NODE
+            cur->value = node_value;
+            stack = pop_stack(stack);
+            if ((push_to_stack(&stack, cur->right) == -1)
+                    || (push_to_stack(&stack, cur->left)) == -1)
                 goto cleanup;
+            layer++;
         }
     }
     return head;
@@ -226,7 +234,7 @@ static rope *rope_from_string(const uint32_t char_width, uint8_t *str, const uin
         return NULL;
     r->char_width = char_width;
     r->str_length = str_length;
-    if (str_length < MAX_NODE_CONTENTS) {
+    if (str_length <= MAX_NODE_CONTENTS) {
         r_node *head = create_node_from_string(char_width, str, str_length);
         if (head == NULL) {
             free(r);
@@ -234,7 +242,7 @@ static rope *rope_from_string(const uint32_t char_width, uint8_t *str, const uin
         }
         r->head = head;
     } else {
-        create_node_structure_from_string(char_width, str, str_length);
+        r->head = create_node_structure_from_string(char_width, str, str_length);
     }
     return r;
 }
@@ -252,12 +260,12 @@ static inline int8_t copy_string_to_node(r_node *node,
 
 int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length) {
     r_node *cur = r->head;
-    if (str_length < MAX_NODE_CONTENTS) {
-        // If is a simple insert of a new node
+    // If is a simple insert of a new node
+    if (str_length <= MAX_NODE_CONTENTS) {
         while (cur->right != NULL)
             cur = cur->right;
+        // If the found node has no string put it there
         if (cur->value == 0) {
-            // If the found node has no string put it there
             if (copy_string_to_node(cur, r->char_width, str, str_length) == -1)
                 return -1;
         } else {
@@ -271,6 +279,8 @@ int8_t append_to_rope(rope *r, uint8_t *str, const uint32_t str_length) {
         }
         r->str_length += str_length;
     } else {
+        // Create a new rope from the string and concatentate the original
+        // and the new rope
         rope *r2 = rope_from_string(r->char_width, str, str_length);
         if (r2 == NULL)
             return -1;
